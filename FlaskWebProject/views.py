@@ -30,6 +30,7 @@ def home():
 @app.route('/new_post', methods=['GET', 'POST'])
 @login_required
 def new_post():
+    #app.logger.warning('IS ****NEWWWWW**** POST METHOD')
     form = PostForm(request.form)
     if form.validate_on_submit():
         post = Post()
@@ -46,6 +47,7 @@ def new_post():
 @app.route('/post/<int:id>', methods=['GET', 'POST'])
 @login_required
 def post(id):
+    #app.logger.warning('IS IN POST METHOD')
     post = Post.query.get(int(id))
     form = PostForm(formdata=request.form, obj=post)
     if form.validate_on_submit():
@@ -60,28 +62,36 @@ def post(id):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    #app.logger.warning('I ENTERED IN LOGIN METHOD.')
     if current_user.is_authenticated:
+        app.logger.warning('admin logged in sucessfully.')
         return redirect(url_for('home'))
     form = LoginForm()
     if form.validate_on_submit():
+        #app.logger.warning('is here AFTER SUBMIT - VALIDATE_ON_SUBMIT')
         user = User.query.filter_by(username=form.username.data).first()
         if user is None or not user.check_password(form.password.data):
+            app.logger.warning('Invalid login attempt.')
             flash('Invalid username or password')
             return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('home')
+        app.logger.warning('admin logged in sucessfully.')
         return redirect(next_page)
+    #app.logger.warning('IT IS STILL HERE IN LOGIN  VS 222222')
     session["state"] = str(uuid.uuid4())
     auth_url = _build_auth_url(scopes=Config.SCOPE, state=session["state"])
-    return render_template('login.html', title='Sign In', form=form, auth_url=auth_url)
+    return render_template('login.html', title='Sign In teste', form=form, auth_url=auth_url)
 
 @app.route(Config.REDIRECT_PATH)  # Its absolute URL must match your app's redirect_uri set in AAD
 def authorized():
+    #app.logger.warning('is here AUTHORIZED()')
     if request.args.get('state') != session.get("state"):
         return redirect(url_for("home"))  # No-OP. Goes back to Index page
     if "error" in request.args:  # Authentication/Authorization failure
+        app.logger.warning('Invalid login attempt.')
         return render_template("auth_error.html", result=request.args)
     if request.args.get('code'):
         cache = _load_cache()
@@ -92,6 +102,7 @@ def authorized():
             redirect_uri=url_for('authorized', _external=True, _scheme='https')
         )
         if "error" in result:
+            app.logger.warning('Invalid login attempt.')
             return render_template("auth_error.html", result=result)
         session["user"] = result.get("id_token_claims")
         # Note: In a real app, we'd use the 'name' property from session["user"] below
@@ -99,6 +110,7 @@ def authorized():
         user = User.query.filter_by(username="admin").first()
         login_user(user)
         _save_cache(cache)
+        app.logger.warning('admin logged in sucessfully.')
     return redirect(url_for('home'))
 
 @app.route('/logout')

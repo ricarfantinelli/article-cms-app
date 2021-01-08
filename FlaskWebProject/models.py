@@ -41,6 +41,7 @@ class Post(db.Model):
     image_path = db.Column(db.String(100))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    app.logger.warning(f'class Post -- author: {author} - user_id: {user_id}')
 
     def __repr__(self):
         return '<Post {}>'.format(self.body)
@@ -50,6 +51,8 @@ class Post(db.Model):
         self.author = form.author.data
         self.body = form.body.data
         self.user_id = userId
+
+        #app.logger.warning(f'Save changes method -- author: {self.author} - user_id: {self.user_id}')
 
         if file:
             filename = secure_filename(file.filename);
